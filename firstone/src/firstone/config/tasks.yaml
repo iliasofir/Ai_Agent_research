@@ -1,0 +1,209 @@
+research_task:
+  description: >
+    Search for academic papers about {topic} using ArXiv and internet sources.
+    Find between 5 and 7 research papers published around {current_year}.
+    
+    IMPORTANT: Use ArXiv tool FIRST and PRIORITIZE ArXiv papers to minimize API calls.
+    Only use web search if ArXiv doesn't have enough results.
+    
+    EFFICIENCY TIPS:
+    - Start with ArXiv search (use 1-2 searches max)
+    - Only supplement with web search if needed (use 2-3 searches max)
+    - Don't over-search - 5-7 papers is sufficient
+    
+    For EACH paper you find, provide:
+    1. Paper title
+    2. Authors
+    3. Publication year
+    4. Source (ArXiv ID if from ArXiv, or Journal/Conference name)
+    5. Link/DOI/ArXiv URL
+    6. Abstract (from ArXiv if available, or brief summary 2-3 sentences)
+    7. A detailed explanation covering:
+       - Main research question or objective
+       - Key methodology or approach
+       - Main findings or results
+       - Significance or impact in the field
+    
+    Process between 5 and 7 papers minimum. Include the full content for each paper.
+    Prioritize ArXiv papers when available to reduce API calls.
+  expected_output: >
+    A markdown formatted report with 5 to 7 academic papers, each containing:
+    - Paper title
+    - Authors (comma-separated or "et al." is acceptable)
+    - Publication year
+    - Source (ArXiv ID like "arXiv:2301.12345" or journal/conference name)
+    - Link (ArXiv URL, DOI, or paper URL)
+    - Abstract or Summary (at least 50 words, informative overview)
+    - Detailed Explanation section with (at least 50 words each):
+      * Research Question/Objective
+      * Methodology/Approach
+      * Main Findings/Results
+      * Significance/Impact
+    
+    Format each paper as a numbered section in markdown without '```' code blocks.
+    Example structure:
+    ## 1. [Paper Title]
+    **Authors:** [names]
+    **Year:** [year]
+    **Source:** arXiv:XXXX.XXXXX or [Journal Name]
+    **Link:** [URL]
+    
+    ### Abstract
+    [abstract text - at least 50 words]
+    
+    ### Detailed Explanation
+    **Research Question:** [at least 50 words]
+    **Methodology:** [at least 50 words]
+    **Findings:** [at least 50 words]
+    **Significance:** [at least 50 words]
+  agent: researcher
+
+
+review_task:
+  description: >
+    Critically evaluate the research papers found about {topic}.
+    
+    {feedback}
+    
+    For EACH paper provided by the researcher, assess:
+    1. Relevance to the topic
+    2. Credibility of source (peer-reviewed, reputable journal, etc.)
+    3. Clarity and completeness of explanation
+    4. Validity of methodology and findings
+    5. Overall contribution to the field
+    
+    BALANCED Quality Criteria (be fair but thorough):
+    1. QUANTITY: Minimum 5 papers, maximum 7 papers (flexible)
+    2. COMPLETENESS: Each paper should have most fields (title, authors, year, source, link, abstract, explanation)
+    3. SOURCE QUALITY: At least 60% from credible sources (ArXiv, peer-reviewed journals, conferences, reputable sites)
+    4. RELEVANCE: Average relevance should be >= 70% (papers should generally relate to topic)
+    5. DETAIL: Abstracts should be informative (50+ words), methodology and findings should be described (50+ words each)
+    6. CLARITY: Explanations should be understandable, not necessarily exhaustive
+    
+    BALANCED APPROACH:
+    - First iteration: May reject if major issues (too few papers, completely off-topic, missing critical info)
+    - Second iteration: Should approve if researcher addressed main concerns and provided reasonable research
+    - Be constructive: Focus feedback on the most important improvements needed
+    
+    After evaluating all papers, provide:
+    - valid: true if quality is acceptable (not perfect, but good enough for synthesis), false if major issues remain
+    - feedback: If valid is false, provide SPECIFIC and CONSTRUCTIVE reasons focusing on the TOP 3-5 most important issues
+    
+    BE FAIR AND REASONABLE. Most research should pass after 1-2 iterations if the researcher makes genuine improvements.
+  expected_output: >
+    A JSON response with exactly these fields:
+    {
+      "valid": true or false,
+      "feedback": "Constructive feedback string if rejected, null if approved"
+    }
+    
+    Example REJECTION (first attempt - focus on key issues):
+    {
+      "valid": false,
+      "feedback": "Research needs improvement in these key areas:\n1. Only 4 papers found - please find at least 5 papers\n2. Paper 2 and Paper 4 lack clear methodology descriptions - add 2-3 sentences explaining the research approach\n3. Paper 3 is off-topic (discusses X instead of {topic}) - replace with relevant paper\n4. Overall relevance is 65% - aim for 70%+ by ensuring papers directly address {topic}"
+    }
+    
+    Example APPROVAL (after improvements):
+    {
+      "valid": true,
+      "feedback": null
+    }
+    
+    Example APPROVAL (first attempt if quality is good):
+    {
+      "valid": true,
+      "feedback": null
+    }
+  agent: reviewer
+
+
+synthesis_task:
+  description: >
+    CONDITIONAL TASK: This task should ONLY execute if the review_task approved the research (approved: true).
+    
+    Create a comprehensive synthesis report on {topic} using the approved research papers.
+    
+    Your tasks:
+    1. Read the researcher's findings (all approved papers)
+    2. Read the reviewer's validation decision
+    3. Extract key themes and patterns across papers
+    4. Identify areas of consensus and disagreement
+    5. Synthesize insights into a cohesive narrative
+    6. Provide actionable recommendations
+    
+    The synthesis report should include:
+    
+    ## Executive Summary
+    - Brief overview (2-3 paragraphs)
+    - Key findings at a glance
+    - Main recommendations
+    
+    ## Introduction
+    - Research question and scope
+    - Number of papers analyzed
+    - Methodology overview
+    
+    ## Main Findings
+    - Theme 1: [Pattern/trend across papers]
+      * Supporting evidence from papers
+      * Key insights
+    - Theme 2: [Another pattern]
+      * Supporting evidence
+      * Key insights
+    (Continue for all major themes)
+    
+    ## Analysis and Insights
+    - Areas of consensus among researchers
+    - Conflicting findings or debates
+    - Novel approaches or methodologies
+    - Gaps in current research
+    
+    ## Conclusions and Recommendations
+    - Summary of key takeaways
+    - Implications for the field
+    - Future research directions
+    - Practical applications
+    
+    ## References
+    - All cited papers with full bibliographic details
+    
+    NOTE: If review_task returned approved: false, output a brief message:
+    "Synthesis task skipped: Research did not meet quality criteria. Please review the researcher's output and address the issues identified by the reviewer."
+  expected_output: >
+    A comprehensive markdown synthesis report (3000-5000 words) formatted without '```' code blocks.
+    
+    The report should:
+    - Be well-structured with clear sections and subsections
+    - Cite specific papers when discussing findings
+    - Use professional academic writing style
+    - Include actionable insights and recommendations
+    - Don't include any content from the reviewer's rejection reasons if synthesis is skipped.
+    - Don't describe your own process; focus solely on the synthesis content.
+    
+    Format example:
+    # Synthesis Report: [Topic]
+    
+    ## Executive Summary
+    [2-3 paragraph overview]
+    
+    ## Introduction
+    [Context and methodology]
+    
+    ## Main Findings
+    ### Theme 1: [Name]
+    [Detailed analysis with citations]
+    
+    ### Theme 2: [Name]
+    [Detailed analysis with citations]
+    
+    ## Analysis and Insights
+    [Cross-paper analysis]
+    
+    ## Conclusions and Recommendations
+    [Summary and future directions]
+    
+    ## References
+    1. [Full citation]
+    2. [Full citation]
+    ...
+  agent: synthesizer
